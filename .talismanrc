@@ -3,6 +3,10 @@ fileignoreconfig:
   checksum: 17fe5cfd0f7fb866bfc829ac8f7362babaae0497450b0c5043b60b160a255141
 - filename: generate_api_token.py
   checksum: b850bc2ccb6caef1ea6ba036c9261d442ad5384d125edcef76a8286f98ed667e
+- filename: main.py
+  checksum: 1a75079503a7e643fd94e0752fee7f87cd84be2d69892131a2a7ff0ee45a8bc6
 - filename: openai_utility/openai_utils.py
   checksum: 1a6c880b56c1d0b2b281739ed6319a7d6da9a3a044228bb3700f86f46019c07a
+- filename: translator.py
+  checksum: 775604b1f19e779570c10299d259b9b001ac79db8e27f5df4f74eda7ba9beb7e
 version: "1.0"

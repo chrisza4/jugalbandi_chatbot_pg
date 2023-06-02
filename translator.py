@@ -8,7 +8,7 @@ from pydub import AudioSegment
 
 
 class translator:
-    def __init__(self, mode="google", input_language='hi'):
+    def __init__(self, mode="google", input_language="hi"):
         self.mode = mode
         self.input_language = input_language
 
@@ -29,28 +29,34 @@ class translator:
         wav_data = base64.b64encode(wav_file.read())
 
         # Encode the file. This is a requirement for bhashini.
-        encoded_string = str(wav_data, 'ascii', 'ignore')
+        encoded_string = str(wav_data, "ascii", "ignore")
         return encoded_string, wav_file
 
     def ai4b_s2t(self, encoded_string):
-        service_id = {'en': 'ai4bharat/whisper-medium-en--gpu--t4',
-                      'hi': 'ai4bharat/conformer-multilingual-indo_aryan-gpu--t4',
-                      'bn': 'ai4bharat/conformer-multilingual-indo_aryan-gpu--t4',
-                      'te': 'ai4bharat/conformer-multilingual-dravidian-gpu--t4',
-                      'ta': 'ai4bharat/conformer-multilingual-dravidian-gpu--t4',
-                      'pa': 'ai4bharat/conformer-multilingual-indo_aryan-gpu--t4'}
+        service_id = {
+            "en": "ai4bharat/whisper-medium-en--gpu--t4",
+            "hi": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4",
+            "bn": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4",
+            "te": "ai4bharat/conformer-multilingual-dravidian-gpu--t4",
+            "ta": "ai4bharat/conformer-multilingual-dravidian-gpu--t4",
+            "pa": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4",
+        }
 
         header = {"Content-Type", "application/json"}
-        data = {"config": {"language": {"sourceLanguage": f"{self.input_language}"},
-                           "transcriptionFormat": {"value": "transcript"},
-                           "audioFormat": "wav",
-                           "samplingRate": "16000",
-                           "postProcessors": None
-                           },
-                "audio": [{"audioContent": encoded_string}]
-                }
+        data = {
+            "config": {
+                "language": {"sourceLanguage": f"{self.input_language}"},
+                "transcriptionFormat": {"value": "transcript"},
+                "audioFormat": "wav",
+                "samplingRate": "16000",
+                "postProcessors": None,
+            },
+            "audio": [{"audioContent": encoded_string}],
+        }
         # Bhashini Url
-        api_url = "https://asr-api.ai4bharat.org/asr/v1/recognize/" + self.input_language
+        api_url = (
+            "https://asr-api.ai4bharat.org/asr/v1/recognize/" + self.input_language
+        )
 
         response = requests.post(api_url, data=json.dumps(data), timeout=60)
         regional_lang_text = json.loads(response.text)["output"][0]["source"]
@@ -59,16 +65,16 @@ class translator:
     def ulca_s2t(self, encoded_string):
         url = "https://meity-auth.ulcacontrib.org/ulca/apis/asr/v1/model/compute"
 
-        payload = json.dumps({
-            "modelId": "620fb9fc7c69fa1fc5bba7be",
-            "task": "asr",
-            "source": f"{self.input_language}",
-            "userId": None,
-            "audioContent": encoded_string
-        })
-        headers = {
-            'Content-Type': 'application/json'
-        }
+        payload = json.dumps(
+            {
+                "modelId": "620fb9fc7c69fa1fc5bba7be",
+                "task": "asr",
+                "source": f"{self.input_language}",
+                "userId": None,
+                "audioContent": encoded_string,
+            }
+        )
+        headers = {"Content-Type": "application/json"}
 
         response = requests.request("POST", url, headers=headers, data=payload)
         return response.json()
@@ -79,7 +85,7 @@ class translator:
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code=self.input_language + '-IN',
+            language_code=self.input_language + "-IN",
         )
 
         response = client.recognize(config=config, audio=audio)
@@ -109,23 +115,23 @@ class translator:
         """
         This function converts
         """
-        if self.mode == 'google':
-            indicText = text if source == dest else self.google_translate_text(text, source, dest)
-            indicText = {'text': indicText}
-            service_name = 'google'
+        if self.mode == "google":
+            indicText = (
+                text
+                if source == dest
+                else self.google_translate_text(text, source, dest)
+            )
+            indicText = {"text": indicText}
+            service_name = "google"
         else:
-            service_name = 'bhashini'
+            service_name = "bhashini"
             header = {"Content-Type", "application/json"}
-            data = {
-                "source_language": source,
-                "target_language": dest,
-                "text": text
-            }
+            data = {"source_language": source, "target_language": dest, "text": text}
             api_url = "https://nmt-api.ai4bharat.org/translate_sentence"
             response = requests.post(api_url, data=json.dumps(data), timeout=60)
             indicText = json.loads(response.text)
 
-        return indicText['text'], service_name
+        return indicText["text"], service_name
 
     def google_text_to_speech(self, text, language):
         """Synthesizes speech from the input string of text."""
@@ -157,7 +163,7 @@ class translator:
         encoded_string, wav_file = self.get_wav_encoded_string(audio_data)
 
         # Speech2Text
-        if self.mode == "AI4B" or self.mode == 'google':
+        if self.mode == "AI4B" or self.mode == "google":
             api_name = "bhashini"
             indicText = self.ai4b_s2t(encoded_string)
             if indicText is None:
@@ -174,13 +180,15 @@ class translator:
         # en_input, _ = self.indicTrans(text=indicText, source=self.input_language, dest='en')
         return indicText, api_name
 
-    def text2speech(self, language, text, gender='female'):
-        service_id = {'en': 'ai4bharat/indic-tts-coqui-misc-gpu--t4',
-                      'hi': 'ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4',
-                      'bn': 'ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4',
-                      'te': 'ai4bharat/indic-tts-coqui-dravidian-gpu--t4',
-                      'ta': 'ai4bharat/indic-tts-coqui-dravidian-gpu--t4',
-                      'pa': 'ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4'}
+    def text2speech(self, language, text, gender="female"):
+        service_id = {
+            "en": "ai4bharat/indic-tts-coqui-misc-gpu--t4",
+            "hi": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+            "bn": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+            "te": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
+            "ta": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
+            "pa": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+        }
         is_google = False
         try:
             try:
@@ -188,10 +196,15 @@ class translator:
                 api_url = "https://tts-api.ai4bharat.org/"
 
                 header = {"Content-Type", "application/json"}
-                payload = {"input": [{"source": text}],
-                           "config": {"gender": gender, "language": {"sourceLanguage": language}}}
+                payload = {
+                    "input": [{"source": text}],
+                    "config": {
+                        "gender": gender,
+                        "language": {"sourceLanguage": language},
+                    },
+                }
                 response = requests.post(api_url, json=payload, timeout=60)
-                audio_content = response.json()['audio'][0]['audioContent']
+                audio_content = response.json()["audio"][0]["audioContent"]
                 audio_content = base64.b64decode(audio_content)
                 audio_content = BytesIO(audio_content)
             except:
